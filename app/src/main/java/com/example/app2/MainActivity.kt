@@ -1,9 +1,12 @@
 package com.example.app2
 
 import android.os.Bundle
+import android.view.View
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import ie.equalit.ouinet.Config
 import ie.equalit.ouinet.Ouinet
+import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
     private lateinit var ouinet: Ouinet
@@ -22,5 +25,20 @@ class MainActivity : AppCompatActivity() {
 
         ouinet = Ouinet(this, config)
         ouinet.start()
+
+        Executors.newFixedThreadPool(1).execute(Runnable { this.updateOuinetState() } as Runnable)
+    }
+
+    private fun updateOuinetState() {
+        val ouinetState = findViewById<View>(R.id.status) as TextView
+        while (true) {
+            try {
+                Thread.sleep(1000)
+            } catch (e: InterruptedException) {
+                e.printStackTrace()
+            }
+            val state = ouinet.state.toString()
+            runOnUiThread { ouinetState.text = "State: $state" }
+        }
     }
 }
