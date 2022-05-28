@@ -2,7 +2,10 @@ package com.example.app2
 
 import android.os.Bundle
 import android.view.View
+import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import ie.equalit.ouinet.Config
 import ie.equalit.ouinet.Ouinet
@@ -14,6 +17,9 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        val get = findViewById<Button>(R.id.get)
+        get.setOnClickListener{ getURL(get) }
 
         var config = Config.ConfigBuilder(this)
             .setCacheType("bep5-http")
@@ -41,4 +47,13 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread { ouinetState.text = "State: $state" }
         }
     }
+
+    fun getURL(view: View?) {
+        val editText = findViewById<View>(R.id.url) as EditText
+        val logViewer = findViewById<View>(R.id.log_viewer) as TextView
+        val url = editText.text.toString()
+        val toast = Toast.makeText(this, "Loading: $url", Toast.LENGTH_SHORT)
+        toast.show()
+    }
+
 }
