@@ -1,10 +1,13 @@
 package com.example.app2
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 import ie.equalit.ouinet.Config
+import ie.equalit.ouinet.Ouinet
 
 class MainActivity : AppCompatActivity() {
+    private lateinit var ouinet: Ouinet
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -16,5 +19,8 @@ class MainActivity : AppCompatActivity() {
             .setInjectorCredentials(BuildConfig.INJECTOR_CREDENTIALS)
             .setInjectorTlsCert(BuildConfig.INJECTOR_TLS_CERT)
             .build()
+
+        ouinet = Ouinet(this, config)
+        ouinet.start()
     }
 }
