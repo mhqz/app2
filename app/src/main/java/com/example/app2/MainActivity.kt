@@ -9,6 +9,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import ie.equalit.ouinet.Config
 import ie.equalit.ouinet.Ouinet
+import okhttp3.OkHttpClient
+import java.net.InetSocketAddress
+import java.net.Proxy
 import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
@@ -54,6 +57,21 @@ class MainActivity : AppCompatActivity() {
         val url = editText.text.toString()
         val toast = Toast.makeText(this, "Loading: $url", Toast.LENGTH_SHORT)
         toast.show()
+
+        val client: OkHttpClient = getOuinetHttpClient()
+    }
+
+    private fun getOuinetHttpClient(): OkHttpClient {
+        return try {
+            val builder = OkHttpClient.Builder()
+
+            // Proxy to ouinet service
+            val ouinetService = Proxy(Proxy.Type.HTTP, InetSocketAddress("127.0.0.1", 8888))
+            builder.proxy(ouinetService)
+            return builder.build()
+        } catch (e: Exception) {
+            throw RuntimeException(e)
+        }
     }
 
 }
