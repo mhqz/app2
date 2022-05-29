@@ -11,12 +11,15 @@ import androidx.appcompat.app.AppCompatActivity
 import ie.equalit.ouinet.Config
 import ie.equalit.ouinet.Ouinet
 import okhttp3.OkHttpClient
+import okhttp3.Request
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
 import java.net.InetSocketAddress
 import java.net.Proxy
+import java.net.URI
+import java.net.URISyntaxException
 import java.security.*
 import java.security.cert.Certificate
 import java.security.cert.CertificateException
@@ -73,6 +76,22 @@ class MainActivity : AppCompatActivity() {
         toast.show()
 
         val client: OkHttpClient = getOuinetHttpClient()
+        val request: Request = Request.Builder()
+            .url(url)
+            .header("X-Ouinet-Group", getDhtGroup(url))
+            .build()
+
+    }
+
+    private fun getDhtGroup(url: String): String {
+        var domain: String = ""
+        try {
+            domain = URI(url).schemeSpecificPart
+            domain = domain.replace("^//".toRegex(), "")
+        } catch (e: URISyntaxException) {
+            e.printStackTrace()
+        }
+        return domain
     }
 
     private fun getOuinetHttpClient(): OkHttpClient {
