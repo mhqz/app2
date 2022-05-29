@@ -41,7 +41,7 @@
                 android:layout_height="48dp"
                 android:layout_gravity="center"
                 android:layout_margin="10dp"
-                android:hint="@string/url_example"
+                android:text="@string/url_example"
                 android:textAlignment="center"
                 />
 
