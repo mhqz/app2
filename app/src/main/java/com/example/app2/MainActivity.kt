@@ -84,7 +84,7 @@ class MainActivity : AppCompatActivity() {
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 e.printStackTrace()
-                logViewer.text = e.toString()
+                runOnUiThread { logViewer.text = e.toString() }
             }
 
             @Throws(IOException::class)
@@ -97,7 +97,7 @@ class MainActivity : AppCompatActivity() {
                         println(responseHeaders.name(i) + ": " + responseHeaders.value(i))
                         i++
                     }
-                    logViewer.text = responseHeaders.toString()
+                    runOnUiThread { logViewer.text = responseHeaders.toString() }
                 }
             }
         })
