@@ -17,17 +17,13 @@ import java.io.IOException
 import java.io.InputStream
 import java.net.InetSocketAddress
 import java.net.Proxy
-import java.security.KeyStore
-import java.security.KeyStoreException
-import java.security.NoSuchAlgorithmException
+import java.security.*
 import java.security.cert.Certificate
 import java.security.cert.CertificateException
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import java.util.concurrent.Executors
-import javax.net.ssl.TrustManager
-import javax.net.ssl.TrustManagerFactory
-import javax.net.ssl.X509TrustManager
+import javax.net.ssl.*
 
 class MainActivity : AppCompatActivity() {
     private lateinit var ouinet: Ouinet
@@ -82,7 +78,12 @@ class MainActivity : AppCompatActivity() {
     private fun getOuinetHttpClient(): OkHttpClient {
         return try {
             val trustManagers: Array<TrustManager> = getOuinetTrustManager()
+
             val builder = OkHttpClient.Builder()
+            builder.sslSocketFactory(
+                getSSLSocketFactory(trustManagers),
+                (trustManagers[0] as X509TrustManager)
+            )
 
             // Proxy to ouinet service
             val ouinetService = Proxy(Proxy.Type.HTTP, InetSocketAddress("127.0.0.1", 8888))
@@ -91,6 +92,13 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             throw RuntimeException(e)
         }
+    }
+
+    @Throws(NoSuchAlgorithmException::class, KeyManagementException::class)
+    private fun getSSLSocketFactory(trustManagers: Array<TrustManager>): SSLSocketFactory {
+        val sslContext = SSLContext.getInstance("TLS")
+        sslContext.init(null, trustManagers, SecureRandom())
+        return sslContext.socketFactory
     }
 
     @Throws(
