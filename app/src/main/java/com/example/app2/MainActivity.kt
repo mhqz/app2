@@ -1,6 +1,7 @@
 package com.example.app2
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -10,12 +11,28 @@ import androidx.appcompat.app.AppCompatActivity
 import ie.equalit.ouinet.Config
 import ie.equalit.ouinet.Ouinet
 import okhttp3.OkHttpClient
+import java.io.FileInputStream
+import java.io.FileNotFoundException
+import java.io.IOException
+import java.io.InputStream
 import java.net.InetSocketAddress
 import java.net.Proxy
+import java.security.KeyStore
+import java.security.KeyStoreException
+import java.security.NoSuchAlgorithmException
+import java.security.cert.Certificate
+import java.security.cert.CertificateException
+import java.security.cert.CertificateFactory
+import java.security.cert.X509Certificate
 import java.util.concurrent.Executors
+import javax.net.ssl.TrustManager
+import javax.net.ssl.TrustManagerFactory
+import javax.net.ssl.X509TrustManager
 
 class MainActivity : AppCompatActivity() {
     private lateinit var ouinet: Ouinet
+    lateinit var ouinetDir: String
+    private val TAG = "OuinetTester"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,6 +48,7 @@ class MainActivity : AppCompatActivity() {
             .setInjectorCredentials(BuildConfig.INJECTOR_CREDENTIALS)
             .setInjectorTlsCert(BuildConfig.INJECTOR_TLS_CERT)
             .build()
+        ouinetDir = config.ouinetDirectory
 
         ouinet = Ouinet(this, config)
         ouinet.start()
@@ -63,6 +81,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun getOuinetHttpClient(): OkHttpClient {
         return try {
+            val trustManagers: Array<TrustManager> = getOuinetTrustManager()
             val builder = OkHttpClient.Builder()
 
             // Proxy to ouinet service
@@ -74,4 +93,76 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @Throws(
+        NoSuchAlgorithmException::class,
+        KeyStoreException::class,
+        CertificateException::class,
+        IOException::class
+    )
+    private fun getOuinetTrustManager(): Array<TrustManager> {
+        return arrayOf(OuinetTrustManager())
+    }
+
+    inner private class OuinetTrustManager : X509TrustManager {
+        private var trustManager: X509TrustManager? = null
+        private var ca: Certificate? = null
+
+        init {
+            val tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+            tmf.init(keyStore)
+            for (tm in tmf.trustManagers) {
+                if (tm is X509TrustManager) {
+                    trustManager = tm
+                    break
+                }
+            }
+        }
+
+        @get:Throws(
+            KeyStoreException::class,
+            CertificateException::class,
+            NoSuchAlgorithmException::class,
+            IOException::class
+        )
+        private val keyStore: KeyStore
+            private get() {
+                val keyStore = KeyStore.getInstance(KeyStore.getDefaultType())
+                keyStore.load(null, null)
+                keyStore.setCertificateEntry("ca", certificateAuthority)
+                return keyStore
+            }
+
+        @get:Throws(CertificateException::class)
+        private val certificateAuthority: Certificate?
+            private get() {
+                var caInput: InputStream? = null
+                try {
+                    caInput = FileInputStream(ouinetDir + "/ssl-ca-cert.pem")
+                } catch (e: FileNotFoundException) {
+                    e.printStackTrace()
+                }
+                val cf = CertificateFactory.getInstance("X.509")
+                ca = cf.generateCertificate(caInput)
+                return ca
+            }
+
+        @Throws(CertificateException::class)
+        override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {
+        }
+
+        @Throws(CertificateException::class)
+        override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {
+            for (cert in chain) {
+                Log.d(TAG, "Server Cert Issuer: " + cert.issuerDN.name + " " + cert.subjectDN.name)
+            }
+            for (cert in trustManager!!.acceptedIssuers) {
+                Log.d(TAG, "Client Trusted Issuer: " + cert.issuerDN.name)
+            }
+            trustManager!!.checkServerTrusted(chain, authType)
+        }
+
+        override fun getAcceptedIssuers(): Array<X509Certificate> {
+            return arrayOf(ca as X509Certificate)
+        }
+    }
 }
