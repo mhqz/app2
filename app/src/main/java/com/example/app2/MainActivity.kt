@@ -125,7 +125,7 @@ class MainActivity : AppCompatActivity() {
             )
 
             // Proxy to ouinet service
-            val ouinetService = Proxy(Proxy.Type.HTTP, InetSocketAddress("127.0.0.1", 8888))
+            val ouinetService = Proxy(Proxy.Type.HTTP, InetSocketAddress("127.0.0.1", 8077))
             builder.proxy(ouinetService)
             return builder.build()
         } catch (e: Exception) {
