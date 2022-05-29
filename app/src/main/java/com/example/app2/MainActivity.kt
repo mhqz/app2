@@ -10,8 +10,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import ie.equalit.ouinet.Config
 import ie.equalit.ouinet.Ouinet
-import okhttp3.OkHttpClient
-import okhttp3.Request
+import okhttp3.*
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -81,6 +80,27 @@ class MainActivity : AppCompatActivity() {
             .header("X-Ouinet-Group", getDhtGroup(url))
             .build()
 
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                e.printStackTrace()
+                logViewer.text = e.toString()
+            }
+
+            @Throws(IOException::class)
+            override fun onResponse(call: Call, response: Response) {
+                response.body.use { _ ->
+                    val responseHeaders = response.headers
+                    var i = 0
+                    val size = responseHeaders.size
+                    while (i < size) {
+                        println(responseHeaders.name(i) + ": " + responseHeaders.value(i))
+                        i++
+                    }
+                    logViewer.text = responseHeaders.toString()
+                }
+            }
+        })
     }
 
     private fun getDhtGroup(url: String): String {
