@@ -35,7 +35,7 @@ class MainActivity : AppCompatActivity() {
         ouinet = Ouinet(this, config)
         ouinet.start()
 
-        Executors.newFixedThreadPool(1).execute(Runnable { this.updateOuinetState() } as Runnable)
+        Executors.newFixedThreadPool(1).execute(Runnable { this.updateOuinetState() })
     }
 
     private fun updateOuinetState() {
